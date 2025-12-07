@@ -1,0 +1,214 @@
+import React, { useState, useEffect } from 'react';
+import { Sparkles, List, Grid3x3, Shuffle } from 'lucide-react';
+
+const HolidayBingo = () => {
+  const baseItems = [
+    "Santa", "Snowman", "Gingerbread Man", "The Grinch", "A Set of Reindeer",
+    "Rudolph", "Snowflakes", "Penguins", "Candles", "Nutcracker",
+    "Candy Cane", "Icicles", "Angel", "Snoopy", "Christmas Tree",
+    "Mickey Mouse", "Star", "Colored Lights", "Elf", "Train",
+    "Minion", "Nativity", "Snow Globe", "Wreath", "Dancing Lights"
+  ];
+
+  const [items, setItems] = useState([...baseItems]);
+  const [checked, setChecked] = useState(new Set());
+  const [isBingo, setIsBingo] = useState(true);
+
+  const shuffleItems = () => {
+    const shuffled = [...baseItems].sort(() => Math.random() - 0.5);
+    setItems(shuffled);
+  };
+
+  useEffect(() => {
+    shuffleItems();
+  }, []);
+
+  const shuffleAndReset = () => {
+    shuffleItems();
+    setChecked(new Set());
+  };
+
+  const toggleItem = (item) => {
+    const newChecked = new Set(checked);
+    if (newChecked.has(item)) {
+      newChecked.delete(item);
+    } else {
+      newChecked.add(item);
+    }
+    setChecked(newChecked);
+  };
+
+  const checkBingo = () => {
+    if (!isBingo) return false;
+    
+    // Check rows
+    for (let i = 0; i < 5; i++) {
+      if (items.slice(i * 5, i * 5 + 5).every(item => checked.has(item))) {
+        return true;
+      }
+    }
+    
+    // Check columns
+    for (let i = 0; i < 5; i++) {
+      if ([0, 1, 2, 3, 4].every(row => checked.has(items[row * 5 + i]))) {
+        return true;
+      }
+    }
+    
+    // Check diagonals
+    if ([0, 6, 12, 18, 24].every(i => checked.has(items[i]))) {
+      return true;
+    }
+    if ([4, 8, 12, 16, 20].every(i => checked.has(items[i]))) {
+      return true;
+    }
+    
+    return false;
+  };
+
+  const hasBingo = checkBingo();
+
+  const resetBoard = () => {
+    setChecked(new Set());
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-red-100 via-green-50 to-red-100 p-2 sm:p-4 md:p-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-4 sm:mb-6 md:mb-8">
+          <div className="flex items-center justify-center gap-1 sm:gap-2 mb-2">
+            <Sparkles className="text-red-600 w-6 h-6 sm:w-8 sm:h-8" />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-green-700">
+              Holiday Decoration Hunt
+            </h1>
+            <Sparkles className="text-green-600 w-6 h-6 sm:w-8 sm:h-8" />
+          </div>
+          <p className="text-gray-700 text-sm sm:text-base md:text-lg">Find and check off holiday decorations!</p>
+        </div>
+
+        {/* Controls */}
+        <div className="flex flex-wrap gap-2 sm:gap-3 justify-center mb-4 sm:mb-6">
+          <button
+            onClick={() => setIsBingo(true)}
+            className={`flex items-center gap-1 sm:gap-2 px-3 py-2 sm:px-6 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition-all ${
+              isBingo
+                ? 'bg-green-600 text-white shadow-lg'
+                : 'bg-white text-green-600 hover:bg-green-50'
+            }`}
+          >
+            <Grid3x3 className="w-4 h-4 sm:w-5 sm:h-5" />
+            Bingo
+          </button>
+          <button
+            onClick={() => setIsBingo(false)}
+            className={`flex items-center gap-1 sm:gap-2 px-3 py-2 sm:px-6 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition-all ${
+              !isBingo
+                ? 'bg-red-600 text-white shadow-lg'
+                : 'bg-white text-red-600 hover:bg-red-50'
+            }`}
+          >
+            <List className="w-4 h-4 sm:w-5 sm:h-5" />
+            Checklist
+          </button>
+          {isBingo && (
+            <button
+              onClick={shuffleAndReset}
+              className="flex items-center gap-1 sm:gap-2 px-3 py-2 sm:px-6 sm:py-3 bg-purple-600 text-white rounded-lg font-semibold text-sm sm:text-base hover:bg-purple-700 transition-all shadow-md"
+            >
+              <Shuffle className="w-4 h-4 sm:w-5 sm:h-5" />
+              Randomize
+            </button>
+          )}
+          <button
+            onClick={resetBoard}
+            className="px-3 py-2 sm:px-6 sm:py-3 bg-white text-gray-700 rounded-lg font-semibold text-sm sm:text-base hover:bg-gray-100 transition-all shadow-md"
+          >
+            Reset
+          </button>
+        </div>
+
+        {/* Progress - Only show in Checklist mode */}
+        {!isBingo && (
+          <div className="bg-white rounded-lg p-4 mb-6 shadow-lg">
+            <div className="flex justify-between items-center mb-2">
+              <span className="font-semibold text-gray-700">Progress:</span>
+              <span className="text-lg font-bold text-green-600">
+                {checked.size} / {baseItems.length}
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+              <div
+                className="bg-gradient-to-r from-green-500 to-red-500 h-4 transition-all duration-300"
+                style={{ width: `${(checked.size / baseItems.length) * 100}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Bingo Completion Message - Show above board */}
+        {hasBingo && isBingo && (
+          <div className="mb-6 bg-gradient-to-r from-red-600 to-green-600 text-white p-6 rounded-lg shadow-2xl text-center animate-pulse">
+            <h2 className="text-3xl font-bold mb-2">🎉 BINGO! 🎉</h2>
+            <p className="text-xl">You got a bingo!</p>
+          </div>
+        )}
+
+        {/* Bingo Board View */}
+        {isBingo && (
+          <div className="grid grid-cols-5 gap-2 md:gap-3 bg-white p-4 rounded-lg shadow-2xl border-4 border-red-600">
+            {items.map((item, index) => (
+              <button
+                key={index}
+                onClick={() => toggleItem(item)}
+                className={`aspect-square flex items-center justify-center p-2 rounded-lg font-semibold text-xs md:text-sm text-center transition-all transform hover:scale-105 ${
+                  checked.has(item)
+                    ? 'bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg'
+                    : 'bg-gradient-to-br from-red-50 to-green-50 text-gray-700 hover:from-red-100 hover:to-green-100 border-2 border-gray-300'
+                }`}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Checklist View */}
+        {!isBingo && (
+          <div className="grid grid-cols-5 gap-2 md:gap-3 bg-white p-4 rounded-lg shadow-2xl border-4 border-red-600">
+            {baseItems.map((item, index) => (
+              <button
+                key={index}
+                onClick={() => toggleItem(item)}
+                className={`aspect-square flex items-center justify-center p-2 rounded-lg font-semibold text-xs md:text-sm text-center transition-all transform hover:scale-105 ${
+                  checked.has(item)
+                    ? 'bg-gradient-to-br from-green-500 to-green-600 text-white shadow-lg'
+                    : 'bg-gradient-to-br from-red-50 to-green-50 text-gray-700 hover:from-red-100 hover:to-green-100 border-2 border-gray-300'
+                }`}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Completion Message */}
+        {hasBingo && isBingo && (
+          <div className="mt-6 bg-gradient-to-r from-red-600 to-green-600 text-white p-6 rounded-lg shadow-2xl text-center animate-pulse">
+            <h2 className="text-3xl font-bold mb-2">🎉 BINGO! 🎉</h2>
+            <p className="text-xl">You got a bingo!</p>
+          </div>
+        )}
+
+        {checked.size === items.length && (
+          <div className="mt-6 bg-gradient-to-r from-red-600 to-green-600 text-white p-6 rounded-lg shadow-2xl text-center animate-pulse">
+            <h2 className="text-3xl font-bold mb-2">🎉 Congratulations! 🎉</h2>
+            <p className="text-xl">You found all the holiday decorations!</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default HolidayBingo;
